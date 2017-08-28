@@ -10,29 +10,23 @@ def create_playlist(name):
     pass
 ```
 
-## Examples
-
-```
-> create_playlist 'My Love'
-
-> play 'My Love'
-> play 晴天
-
-> resume
-> pause
-> stop
-> seek 2:34
-```
-
 ## 大致的设计描述
 
 1. 用类似目录结构（文件系统）的方式来组织音乐资源
 
 ## Design Considerations
 
-### 用虚拟的还是实际的文件系统
+### 命令行的哪种模式？
 
-## 命令设计
+- REPL (mycli)
+- fullscreen (rtv, mutt)
+- shell command (hn)
+
+理想是 REPL + fullscreen 模式。
+播放器的状态显示理论上应该是一直存在的...
+但是搜索歌曲、添加/删除歌曲等应该都是命令形式的...
+
+### 用虚拟的还是实际的文件系统
 
 ### virtual fs
 
@@ -42,7 +36,7 @@ def create_playlist(name):
 │   ├── Authors
 │   │   └── ZhouJielun
 │   │       ├── Albums
-│   │       │   └── ($ac) 我很忙
+│   │       │   └── ($hash) 我很忙
 │   │       └── HotSongs
 │   └── Users
 │       ├── (~) cosven
@@ -54,7 +48,7 @@ def create_playlist(name):
 │       │       │   ├── -
 │       │       │   ├── Jaymay
 │       │       │   └── see\ green,\ see\ blue
-│       │       └── $(bs) 安安静静的
+│       │       └── $(hash) 安安静静的
 │       └── miao
 ├── Qq
 └── Xiami
