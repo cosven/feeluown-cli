@@ -4,12 +4,13 @@ from setuptools import setup
 
 
 requires = [
-    'prompt_toolkit>=1.0.14,<2.0'
+    'prompt_toolkit>=1.0.14,<2.0',
+    'pygments',
 ]
 
 
 setup(
-    name='toy',
+    name='fuocli',
     version='0.0.0a0',
     description='feeluown cli',
     author='Cosven',
@@ -23,8 +24,6 @@ setup(
     url='https://github.com/cosven/feeluown-cli',
     keywords=['toy'],
     classifiers=(
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3 :: Only',

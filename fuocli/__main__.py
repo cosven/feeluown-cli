@@ -2,32 +2,21 @@
 
 from __future__ import unicode_literals
 
+import asyncio
 import logging
 
-from prompt_toolkit import prompt
-from prompt_toolkit.styles import style_from_pygments
-from pygments.styles.tango import TangoStyle
-from pygments.lexers.sql import MySqlLexer
-
-from fuocli import cmd, DefaultCompleter, DefaultLexer
+from fuocli.app import App
 
 
-logging.basicConfig(filename='fuocli.log', level=logging.DEBUG)
+handler = logging.FileHandler('fuocli.log')
+formatter = logging.Formatter('%(asctime)s (%(process)d/%(threadName)s) '
+                              '%(name)s %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root_logger = logging.getLogger('fuocli')
+root_logger.addHandler(handler)
+root_logger.setLevel(logging.DEBUG)
 
 
-@cmd('play')
-def play():
-    pass
-
-
-@cmd('create_playlist')
-def create_playlist():
-    pass
-
-
-default_style = style_from_pygments(TangoStyle)
-
-
-while True:
-    text = prompt('> ', completer=DefaultCompleter(), lexer=MySqlLexer)
-    print(text)
+app = App()
+event_loop = asyncio.get_event_loop()
+event_loop.run_until_complete(app.run())

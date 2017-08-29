@@ -7,3 +7,7 @@ class FuocliException(Exception):
 
 class CommandAlreadyExists(FuocliException):
     pass
+
+
+class CommandNotFound(FuocliException):
+    pass
