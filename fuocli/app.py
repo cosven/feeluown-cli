@@ -9,7 +9,6 @@
 
 from prompt_toolkit import prompt_async
 
-
 from fuocli.cmds import call_cmd_handler
 from fuocli.completer import DefaultCompleter
 from fuocli.lexer import DefaultLexer

@@ -11,3 +11,7 @@ class CommandAlreadyExists(FuocliException):
 
 class CommandNotFound(FuocliException):
     pass
+
+
+class VfsError(FuocliException):
+    pass
