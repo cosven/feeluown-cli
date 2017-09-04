@@ -10,6 +10,6 @@
 
 class AppContext(object):
 
-    @property
-    def workspace(self):
-        return '/'
+    def __init__(self, vfs):
+        self.cwd = '/'
+        self.vfs = vfs

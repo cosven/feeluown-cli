@@ -52,6 +52,8 @@ def ls():
 
 
 @cmd('cd')
-def cd():
+def cd(path):
+    logger.debug('prepare to chdir to: {}'.format(path))
     app_ctx = get_app_ctx()
-    logger.debug(app_ctx.workspace)
+    app_ctx.vfs.chdir(path)
+    logger.debug(app_ctx.vfs.getcwd())
