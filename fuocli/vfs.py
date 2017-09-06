@@ -5,19 +5,63 @@
     ~~~~~~~~~~
 
     virtual file system
+
 """
+import os
+from enum import Enum
 
 from fuocli.exc import VfsError  # noqa
+
+
+class Mode(Enum):
+    """
+    temporarily:
+
+    mask: 0x0300
+
+    **file format**
+    dir: 0x0100
+    file: 0x0200
+
+    **access rights**
+    other execute: 0x0001
+    other write: 0x0002
+    other read: 0x0004
+
+    owner execute: 0x0008
+    owner read: 0x0010
+    owner write: 0x0020
+    """
+    mask = 0x0300
+    fdir = 0x0100
+    freg = 0x0200
+
+    xusr = 0x0008
+    rusr = 0x0010
+    wusr = 0x0020
+
+    xoth = 0x0001
+    roth = 0x0002
+    woth = 0x0004
+
+    @classmethod
+    def isdir(cls, m):
+        return m & cls.mask.value == cls.fdir.value
 
 
 class VfsNOENT(VfsError):
     pass
 
 
+class VfsNodeExists(VfsError):
+    pass
+
+
 class Node(object):
-    def __init__(self, name, path):
+    def __init__(self, name, path, mode):
         self.name = name
         self.path = path
+        self.mode = mode
 
 
 class Entry(Node):
@@ -26,9 +70,17 @@ class Entry(Node):
         self.name = name
         self.parent = parent
         self._childen = []
+        self._node_names = set()
 
-    def add(self):
-        pass
+    def add(self, node):
+        if node.name in self._node_names:
+            raise VfsNodeExists
+        self._node_names.add(node.name)
+        self._childen.append(node)
+
+    @property
+    def nodes(self):
+        return
 
     def __contains__(self, item):
         pass
@@ -73,7 +125,14 @@ class Vfs(object):
     """
     virtual file system and system call simulation
 
-    structure::
+    NOTE: we will eventually simulate a vfs here, however, not now -> flag
+
+    chain(for understanding)::
+
+        files -> files_struct(fd) -> file *[] -> file(f_dentry, f_op) ->
+        dentry(d_inode) -> i_node(i_op, i_sb) -> superblock
+
+    structure(for understanding)::
 
         (root) Providers/
         ├── Netease
@@ -103,6 +162,8 @@ class Vfs(object):
         self.cwd = '/'
         self.root = Entry('/')
 
+        self._hash_cache = dict()  # {'/Netease/xxx': 'xxx'}
+
     def stat(self, pathname):
         """
         retrieve information about the file pointed to by pathname
@@ -121,13 +182,33 @@ class Vfs(object):
 
         Reference: fs/namei.c -> path_lookup
 
-        :return: Nameidata
+        :return: Entry
         """
-        name = abspath.split('/')[-1]
-        return Nameidata(dentry, name)
+        if abspath == '/':
+            return self.root
+
+        normpath = os.path.normpath(abspath)
+        entry = self._hash_cache.get(normpath)
+        if entry is not None:
+            return entry
+
+        names = abspath.split('/')[1:]
+        hash_cache = self._hash_cache['/']
+
 
     def get_dentry(self, dirpath):
         pass
+
+
+class ProviderMountPoint(Entry):
+    _instances = []
+
+    def __init__(self, name):
+        self.name = name.title()
+
+    @classmethod
+    def create(cls, name):
+        return cls(name=name)
 
 
 class FuoVfs(Vfs):
@@ -135,3 +216,8 @@ class FuoVfs(Vfs):
     def __init__(self, source):
         super().__init__()
         self.source = source
+
+    def refresh_tree(self):
+        providers = self.source.list_providers()
+        for provider in providers:
+            pass
