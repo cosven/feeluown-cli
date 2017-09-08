@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+    fuocli.btree
+    ~~~~~~~~~~~~
+
+    B-Tree implementation
+    Reference: https://gist.github.com/teepark/572734
+
+    TODO: refactor and add more testcase
+"""
+
+
 import bisect
 
 
@@ -199,7 +210,6 @@ class BTree(object):
         node.insert(index, item, ancestors)
 
     def remove(self, item):
-        current = self._root
         ancestors = self._path_to(item)
 
         if self._present(item, ancestors):

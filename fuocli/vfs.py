@@ -49,50 +49,71 @@ class Mode(Enum):
         return m & cls.mask.value == cls.fdir.value
 
 
+NODE_DEFAULT_MODE = (Mode.freg.value | Mode.rusr.value | Mode.wusr.value |
+                     Mode.roth.value | Mode.woth.value)
+ENTRY_DEFAULT_MODE = (Mode.fdir.value | Mode.rusr.value | Mode.wusr.value |
+                      Mode.roth.value | Mode.woth.value)
+
+
 class VfsNOENT(VfsError):
     pass
 
 
-class VfsNodeExists(VfsError):
+class VfsNodeAlreadyExists(VfsError):
     pass
 
 
 class Node(object):
-    def __init__(self, name, path, mode):
+    """
+    Normal File
+
+    design constraits:
+    - only one root
+    """
+
+    def __init__(self, name, path, mode=NODE_DEFAULT_MODE):
         self.name = name
         self.path = path
         self.mode = mode
 
+    def __str__(self):
+        return '<Node {}>'.format(self.path)
+
+    def __gt__(self, other):
+        return self.path > other.path
+
+    def __lt__(self, other):
+        return not self > other
+
+    def __ne__(self, other):
+        return self.path == other.path
+
 
 class Entry(Node):
-    def __init__(self, name, path, parent=None):
-        self.path = path
-        self.name = name
+    def __init__(self, name, path, mode=ENTRY_DEFAULT_MODE, parent=None):
+        super().__init__(name, path, mode)
         self.parent = parent
         self._childen = []
         self._node_names = set()
 
     def add(self, node):
         if node.name in self._node_names:
-            raise VfsNodeExists
+            raise VfsNodeAlreadyExists
         self._node_names.add(node.name)
         self._childen.append(node)
+
+    def get(self, name):
+        for child in self._childen:
+            if child.name == name:
+                return child
+        raise VfsNOENT('{} not found'.format(name))
 
     @property
     def nodes(self):
         return
 
     def __contains__(self, item):
-        pass
-
-
-class Nameidata(object):
-    """
-    assistance object for path lookup
-    """
-    def __init__(self, dentry, name):
-        self.dentry = dentry  # parent directory dentry
-        self.name = name  # last component of path
+        return item.name in self._node_names
 
 
 class Stat(object):
@@ -160,9 +181,7 @@ class Vfs(object):
 
     def __init__(self):
         self.cwd = '/'
-        self.root = Entry('/')
-
-        self._hash_cache = dict()  # {'/Netease/xxx': 'xxx'}
+        self.root = Entry('/', '/')
 
     def stat(self, pathname):
         """
@@ -188,22 +207,14 @@ class Vfs(object):
             return self.root
 
         normpath = os.path.normpath(abspath)
-        entry = self._hash_cache.get(normpath)
-        if entry is not None:
-            return entry
+        names = normpath.split('/')
 
-        entry_names = normpath.split('/')
-        degree = len(entry_names)
-        tmp_entry = None
-        height = degree
-        for i in range(0, degree):
-            entry_name = '/'.join(entry_names[:-i])
-            if entry_name in self._hash_cache:
-                tmp_entry = self._hash_cache[entry_name]
-                height = i
-                break
+        entry = self.root
+        for name in names:
+            entry = entry.get(name)
+        return entry
 
-    def get_dentry(self, dirpath):
+    def get_entry(self, dirpath):
         pass
 
 
