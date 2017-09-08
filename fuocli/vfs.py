@@ -192,9 +192,16 @@ class Vfs(object):
         if entry is not None:
             return entry
 
-        names = abspath.split('/')[1:]
-        hash_cache = self._hash_cache['/']
-
+        entry_names = normpath.split('/')
+        degree = len(entry_names)
+        tmp_entry = None
+        height = degree
+        for i in range(0, degree):
+            entry_name = '/'.join(entry_names[:-i])
+            if entry_name in self._hash_cache:
+                tmp_entry = self._hash_cache[entry_name]
+                height = i
+                break
 
     def get_dentry(self, dirpath):
         pass
