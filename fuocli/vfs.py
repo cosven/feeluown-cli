@@ -69,12 +69,20 @@ class Node(object):
 
     design constraits:
     - only one root
-    """
 
-    def __init__(self, name, path, mode=NODE_DEFAULT_MODE):
+    TODO: use __slots__?
+    """
+    def __init__(self, name, parent, mode=NODE_DEFAULT_MODE):
         self.name = name
-        self.path = path
+        # the parent of root node is itself
+        self.parent = parent if parent is not None else self
         self.mode = mode
+
+    @property
+    def path(self):
+        if self.parent == self:
+            return '/'
+        return os.path.join(self.parent.path, self.name)
 
     def __str__(self):
         return '<Node {}>'.format(self.path)
@@ -90,56 +98,32 @@ class Node(object):
 
 
 class Entry(Node):
-    def __init__(self, name, path, mode=ENTRY_DEFAULT_MODE, parent=None):
-        super().__init__(name, path, mode)
-        self.parent = parent
-        self._childen = []
-        self._node_names = set()
+    def __init__(self, name, parent, mode=ENTRY_DEFAULT_MODE):
+        self.children = []
+        super().__init__(name, parent, mode)
 
     def add(self, node):
-        if node.name in self._node_names:
-            raise VfsNodeAlreadyExists
-        self._node_names.add(node.name)
-        self._childen.append(node)
+        if node not in self:
+            self.children.append(node)
+            return True
+        return False
 
     def get(self, name):
-        for child in self._childen:
+        for child in self.children:
             if child.name == name:
                 return child
-        raise VfsNOENT('{} not found'.format(name))
-
-    @property
-    def nodes(self):
-        return
+        return None
 
     def __contains__(self, item):
-        return item.name in self._node_names
+        return item.name in [child.name for child in self.children]
+
+    def __iter__(self):
+        for child in self.children:
+            yield child
 
 
 class Stat(object):
     pass
-
-
-class Session(object):
-    def __init__(self, vfs):
-        self.cwd = '/'
-        self.vfs = vfs
-
-    def chdir(self, pathname):
-        """
-        change current working directory
-
-        :raise fuocli.vfs.VfsNOENT:
-        """
-        if self.vfs.stat(pathname) is not None:
-            abspath = ''
-            self.cwd = abspath
-
-    def getcwd(self):
-        """
-        get current working directory
-        """
-        return self.cwd
 
 
 class Vfs(object):
@@ -181,7 +165,20 @@ class Vfs(object):
 
     def __init__(self):
         self.cwd = '/'
-        self.root = Entry('/', '/')
+        self.root = Entry('/', parent=None)
+
+    def create(self, name, parent, mode=NODE_DEFAULT_MODE):
+        if Mode.isdir(mode):
+            node = Entry(name, parent)
+        else:
+            node = Node(name, parent)
+        if parent is not None:
+            parent.add(node)
+        return node
+
+    def listdir(self, entry):
+        for node in entry:
+            yield node
 
     def stat(self, pathname):
         """
@@ -210,23 +207,9 @@ class Vfs(object):
         names = normpath.split('/')
 
         entry = self.root
-        for name in names:
+        for name in names[1:]:
             entry = entry.get(name)
         return entry
-
-    def get_entry(self, dirpath):
-        pass
-
-
-class ProviderMountPoint(Entry):
-    _instances = []
-
-    def __init__(self, name):
-        self.name = name.title()
-
-    @classmethod
-    def create(cls, name):
-        return cls(name=name)
 
 
 class FuoVfs(Vfs):
@@ -234,8 +217,9 @@ class FuoVfs(Vfs):
     def __init__(self, source):
         super().__init__()
         self.source = source
+        self.init_tree()
 
-    def refresh_tree(self):
-        providers = self.source.list_providers()
-        for provider in providers:
-            pass
+    def init_tree(self):
+        self.create('Xiami', self.root, mode=ENTRY_DEFAULT_MODE)
+        self.create('Qq', self.root, mode=ENTRY_DEFAULT_MODE)
+        self.create('Netease', self.root, mode=ENTRY_DEFAULT_MODE)

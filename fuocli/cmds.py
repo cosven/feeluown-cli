@@ -46,14 +46,23 @@ def call_cmd_handler(cmd, *args, **kwargs):
     return _commands_to_handlers[cmd](*args, **kwargs)
 
 
-@cmd('ls')
-def ls():
-    pass
-
-
 @cmd('cd')
 def cd(path):
     logger.debug('prepare to chdir to: {}'.format(path))
     app_ctx = get_app_ctx()
     app_ctx.vfs.chdir(path)
     logger.debug(app_ctx.vfs.getcwd())
+
+
+@cmd('ls')
+def ls():
+    app_ctx = get_app_ctx()
+    vfs = app_ctx.vfs
+    for f in vfs.listdir(app_ctx.curdir):
+        print(f)
+
+
+@cmd('pwd')
+def pwd():
+    app_ctx = get_app_ctx()
+    print(app_ctx.getcwd())
