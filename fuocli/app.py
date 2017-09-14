@@ -9,7 +9,8 @@
 
 from prompt_toolkit import prompt_async, AbortAction
 
-from fuocli.cmds import call_cmd_handler
+from fuocli.cmd import call_cmd_handler
+from fuocli.cmds import *  # noqa, make commands available
 from fuocli.completer import DefaultCompleter
 from fuocli.exc import CommandNotFound
 from fuocli.lexer import DefaultLexer
@@ -27,7 +28,8 @@ class App(object):
                     '> ',
                     completer=DefaultCompleter(),
                     lexer=DefaultLexer,
-                    on_abort=AbortAction.RETRY
+                    on_abort=AbortAction.RETRY,
+                    patch_stdout=True
                 )
                 call_cmd_handler(result)
             except EOFError:

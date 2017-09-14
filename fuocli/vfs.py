@@ -46,7 +46,12 @@ class Mode(Enum):
 
     @classmethod
     def isdir(cls, m):
-        return m & cls.mask.value == cls.fdir.value
+        return m & Mode.mask.value == Mode.fdir.value
+
+
+def isdir(node):
+    m = node.mode
+    return Mode.isdir(m)
 
 
 NODE_DEFAULT_MODE = (Mode.freg.value | Mode.rusr.value | Mode.wusr.value |

@@ -1,64 +1,67 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from functools import wraps
+import os
 
+from prompt_toolkit.completion import Completion
 from prompt_toolkit.shortcuts import clear
 
 from fuocli import get_app_ctx
-from fuocli.exc import CommandAlreadyExists, CommandNotFound
+from fuocli.cmd import cmd
+from fuocli.utils import measure_time
+from fuocli.vfs import isdir
 
-
-__all__ = (
-    'list_commands',
-    'call_cmd_handler',
-)
 
 logger = logging.getLogger(__name__)
 
-_commands = set()
-_commands_to_handlers = {}
+
+class BaseCmdComplter(object):
+    """
+    One cmd completer consists of two parts: options completer
+    and values completer.
+
+    tree structure::
+
+                     --------  cmd(name)  -------
+                  /                |               \
+              options            args(1)           args(2)
+            /  |  |  \         /    |   \             |
+          -a  -c  -l -z      abc   bfs  meme         ...
+         /
+        1
+    """
+    pass
 
 
-def list_commands():
-    return list(_commands)
+class ChdirCompleter(BaseCmdComplter):
+
+    @measure_time
+    def get_completions(self, document, complete_event):
+        app_ctx = get_app_ctx()
+        curdir = app_ctx.curdir
+
+        text = document.text
+        parts = text.split(' ', 1)
+        path = os.path.normpath(parts[1]) if parts[1] else ''
+        logger.debug('{}: path to complete'.format(path))
+
+        # get dirname and basename
+        dirname = os.path.dirname(path)
+        basename = os.path.basename(path)
+        if not dirname:
+            dir_abspath = curdir.path
+        else:
+            dir_abspath = dirname
+        logger.debug('{}: absolute directory path '.format(dir_abspath))
+        entry = app_ctx.vfs.path_lookup(dir_abspath)
+        if entry is None:
+            return []
+        if isdir(entry):
+            for each in entry:
+                yield Completion(each.name, start_position=-len(basename))
 
 
-def cmd(name):
-    if name in _commands:
-        raise CommandAlreadyExists()
-
-    _commands.add(name)
-
-    def decorator(func):
-
-        _commands_to_handlers[name] = func
-
-        @wraps(func)
-        def _wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        return _wrapper
-
-    return decorator
-
-
-def call_cmd_handler(result):
-    if not result:
-        return
-
-    cmd, *args_str = result.split(' ', 1)
-    args_str = args_str[0] if args_str else None
-
-    if cmd not in list_commands():
-        raise CommandNotFound('{}: command not found'.format(cmd))
-
-    if args_str is not None:
-        return _commands_to_handlers[cmd](args_str)
-    else:
-        return _commands_to_handlers[cmd]()
-
-
-@cmd('cd')
+@cmd('cd', completer=ChdirCompleter())
 def cd(path=None):
     logger.debug('prepare to chdir to: {}'.format(path))
     app_ctx = get_app_ctx()
