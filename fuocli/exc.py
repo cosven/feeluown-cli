@@ -15,3 +15,7 @@ class CommandNotFound(FuocliException):
 
 class VfsError(FuocliException):
     pass
+
+
+class NoSuchDir(VfsError):
+    pass

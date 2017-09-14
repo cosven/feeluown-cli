@@ -3,6 +3,8 @@
 import logging
 from functools import wraps
 
+from prompt_toolkit.shortcuts import clear
+
 from fuocli import get_app_ctx
 from fuocli.exc import CommandAlreadyExists, CommandNotFound
 
@@ -40,18 +42,39 @@ def cmd(name):
     return decorator
 
 
-def call_cmd_handler(cmd, *args, **kwargs):
+def call_cmd_handler(result):
+    if not result:
+        return
+
+    cmd, *args_str = result.split(' ', 1)
+    args_str = args_str[0] if args_str else None
+
     if cmd not in list_commands():
         raise CommandNotFound('{}: command not found'.format(cmd))
-    return _commands_to_handlers[cmd](*args, **kwargs)
+
+    if args_str is not None:
+        return _commands_to_handlers[cmd](args_str)
+    else:
+        return _commands_to_handlers[cmd]()
 
 
 @cmd('cd')
-def cd(path):
+def cd(path=None):
     logger.debug('prepare to chdir to: {}'.format(path))
     app_ctx = get_app_ctx()
-    app_ctx.vfs.chdir(path)
-    logger.debug(app_ctx.vfs.getcwd())
+    if path is not None:
+        app_ctx.chdir(path)
+        logger.debug(app_ctx.getcwd())
+
+
+@cmd('clear')
+def clear_():
+    clear()
+
+
+@cmd('exit')
+def exit():
+    raise EOFError
 
 
 @cmd('ls')

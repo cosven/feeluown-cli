@@ -7,6 +7,10 @@
     ...
 """
 
+import os
+
+from fuocli.exc import NoSuchDir
+
 
 class AppContext(object):
 
@@ -20,9 +24,11 @@ class AppContext(object):
 
         :raise fuocli.vfs.VfsNOENT:
         """
-        if self.vfs.stat(pathname) is not None:
-            abspath = ''
-            self.cwd = abspath
+        abspath = os.path.join(self.curdir.path, pathname)
+        directory = self.vfs.path_lookup(abspath)
+        if directory is None:
+            raise NoSuchDir('The direcotry {} does not exist'.format(abspath))
+        self.curdir = directory
 
     def getcwd(self):
         """

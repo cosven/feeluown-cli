@@ -6,6 +6,7 @@ from setuptools import setup
 requires = [
     'prompt_toolkit>=1.0.14,<2.0',
     'pygments',
+    'fuocore',
 ]
 
 

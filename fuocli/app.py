@@ -7,10 +7,11 @@
     ...
 """
 
-from prompt_toolkit import prompt_async
+from prompt_toolkit import prompt_async, AbortAction
 
 from fuocli.cmds import call_cmd_handler
 from fuocli.completer import DefaultCompleter
+from fuocli.exc import CommandNotFound
 from fuocli.lexer import DefaultLexer
 
 
@@ -21,7 +22,16 @@ class App(object):
 
     async def run(self):
         while True:
-            result = await prompt_async('> ',
-                                        completer=DefaultCompleter(),
-                                        lexer=DefaultLexer)
-            call_cmd_handler(result)
+            try:
+                result = await prompt_async(
+                    '> ',
+                    completer=DefaultCompleter(),
+                    lexer=DefaultLexer,
+                    on_abort=AbortAction.RETRY
+                )
+                call_cmd_handler(result)
+            except EOFError:
+                print('Goodbye')
+                break
+            except CommandNotFound as e:
+                print(str(e))
