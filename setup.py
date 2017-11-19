@@ -4,15 +4,12 @@ from setuptools import setup
 
 
 requires = [
-    'prompt_toolkit>=1.0.14,<2.0',
-    'pygments',
-    'fuocore',
 ]
 
 
 setup(
     name='fuocli',
-    version='0.0.0a0',
+    version='0.0.1a0',
     description='feeluown cli',
     author='Cosven',
     author_email='cosven.yin@gmail.com',
@@ -37,6 +34,8 @@ setup(
         'flake8'
     ],
     entry_points={
-        'console_scripts': []
-        },
+        'console_scripts': [
+            'fuocli=fuocli.__main__:main',
+        ]
+    },
 )

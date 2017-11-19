@@ -1,22 +1,22 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import unicode_literals
-
-import asyncio
-import logging
-
-from fuocli.app import App
+import sys
+from socket import socket, AF_INET, SOCK_STREAM
 
 
-handler = logging.FileHandler('fuocli.log')
-formatter = logging.Formatter('%(asctime)s (%(process)d/%(threadName)s) '
-                              '%(name)s %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-root_logger = logging.getLogger('fuocli')
-root_logger.addHandler(handler)
-root_logger.setLevel(logging.DEBUG)
+def send(cmd):
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect(('localhost', 23333))
+    sock.recv(1024)  # 接受 server welcome 消息
+    sock.send(bytes(cmd, 'utf-8'))
+    data = sock.recv(4096)
+    data = data.decode()
+    if data.endswith('OK\n'):
+        data = data[:-4]
+        sock.close()
+        return data
+    print('出现异常.')
 
 
-app = App()
-event_loop = asyncio.get_event_loop()
-event_loop.run_until_complete(app.run())
+def main():
+    cmd = sys.argv[1]
+    content = send(cmd)
+    print(content)
