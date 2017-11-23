@@ -1,5 +1,6 @@
 import re
 import sys
+from contextlib import contextmanager
 from socket import socket, AF_INET, SOCK_STREAM
 
 
@@ -7,26 +8,25 @@ song_identifier_re = re.compile(r'fuo://\w+:song:\d+')
 
 
 def ruok():
-    print('what? are you kidding')
+    print('what? are you kidding?')
 
 
 def play():
     pass
 
 
-def send(cmd):
+@contextmanager
+def connect():
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect(('localhost', 23333))
-    sock.recv(1024)  # 接受 server welcome 消息
-    sock.send(bytes(cmd, 'utf-8'))
-    data = sock.recv(4096*2*2*2)
-    data = data.decode()
-    data = data[:-4]
+    try:
+        yield sock
+    except RuntimeError as e:
+        print(e)
     sock.close()
-    return data
 
 
-def cmd_play():
+def cmd_play(sock):
     if len(sys.argv) > 3:
         ruok()
     elif len(sys.argv) <= 2:
@@ -34,12 +34,14 @@ def cmd_play():
             if not line:
                 continue
             if song_identifier_re.match(line):
-                send('add {}'.format(line))
+                sock.send(line.strip())
             else:
-                print('invalid song identifier: {}'.format(line))
+                print('invalid song identifier: {}'.format(line.strip()))
+    else:
+        sock.send('play {}'.format(sys.argv[2]))
 
 
-def cmd_show(*args, **kwargs):
+def cmd_show(sock):
     pass
 
 
