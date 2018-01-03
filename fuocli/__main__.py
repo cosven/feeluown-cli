@@ -87,6 +87,23 @@ def cmd_list(cli):
         return cli.recv()
 
 
+def cmd_remove(cli):
+    if len(sys.argv) != 3:
+        return ruok
+    else:
+        identifier = sys.argv[2]
+        cli.send('remove {}\n'.format(identifier))
+        return cli.recv()
+
+
+def cmd_status(cli):
+    if len(sys.argv) != 2:
+        return ruok
+    else:
+        cli.send('status\n')
+        return cli.recv()
+
+
 def cmd_show(cli):
     if len(sys.argv) != 3:
         return ruok()
@@ -124,6 +141,10 @@ def main():
             rv = cmd_add(cli)
         elif cmd == 'list':
             rv = cmd_list(cli)
+        elif cmd == 'status':
+            rv = cmd_status(cli)
+        elif cmd == 'remove':
+            rv = cmd_remove(cli)
         elif cmd == 'search':
             rv = cmd_search(cli)
         else:
