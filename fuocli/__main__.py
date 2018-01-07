@@ -69,14 +69,18 @@ def cmd_next(cli):
 
 
 def cmd_add(cli):
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         return ruok()
-    else:
-        rv = ''
+    elif len(sys.argv) == 2:
+        furi_list = []
         for line in sys.stdin:
-            cli.send('add {}\n'.format(line.strip()))
-            rv += cli.recv()
-        return rv
+            furi_list.append(line.strip())
+    else:
+        furi_list = [sys.argv[2]]
+
+    cli.send('add {}\n'.format(','.join(furi_list)))
+    rv = cli.recv()
+    return rv
 
 
 def cmd_list(cli):
@@ -91,8 +95,8 @@ def cmd_remove(cli):
     if len(sys.argv) != 3:
         return ruok
     else:
-        identifier = sys.argv[2]
-        cli.send('remove {}\n'.format(identifier))
+        furi = sys.argv[2]
+        cli.send('remove {}\n'.format(furi))
         return cli.recv()
 
 
