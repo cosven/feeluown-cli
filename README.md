@@ -9,7 +9,7 @@ pip install fuocli --upgrade
 
 ## Usage
 
-```python
+```shell
 fuocli status  # 查看播放器状态
 fuocli add fuo://netease/songs/408814900   # 将一首歌添加到当前播放列表
 fuocli play fuo://netease/songs/408814900  # 播放一首歌
