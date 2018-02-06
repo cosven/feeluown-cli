@@ -6,7 +6,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 SIMPLE_CMD_LIST = (
     'pause', 'resume', 'stop',
     'next', 'previous', 'list',
-    'toggle',
+    'toggle', 'clear',
 )
 
 
@@ -86,7 +86,7 @@ def cmd_add(cli):
 
 def cmd_list(cli):
     if len(sys.argv) != 2:
-        return ruok
+        return ruok()
     else:
         cli.send('list\n')
         return cli.recv()
@@ -94,7 +94,7 @@ def cmd_list(cli):
 
 def cmd_remove(cli):
     if len(sys.argv) != 3:
-        return ruok
+        return ruok()
     else:
         furi = sys.argv[2]
         cli.send('remove {}\n'.format(furi))
@@ -103,7 +103,7 @@ def cmd_remove(cli):
 
 def cmd_status(cli):
     if len(sys.argv) != 2:
-        return ruok
+        return ruok()
     else:
         cli.send('status\n')
         return cli.recv()
