@@ -6,6 +6,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 SIMPLE_CMD_LIST = (
     'pause', 'resume', 'stop',
     'next', 'previous', 'list',
+    'toggle',
 )
 
 
