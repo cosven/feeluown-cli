@@ -10,7 +10,7 @@ requires = [
 
 setup(
     name='fuocli',
-    version='0.0.1a0',
+    version='1.0.0',
     description='feeluown cli',
     author='Cosven',
     author_email='cosven.yin@gmail.com',

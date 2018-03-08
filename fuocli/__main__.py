@@ -1,22 +1,9 @@
+from __future__ import print_function
+
+import os
 import sys
 from contextlib import contextmanager
 from socket import socket, AF_INET, SOCK_STREAM
-
-
-SIMPLE_CMD_LIST = (
-    'pause', 'resume', 'stop',
-    'next', 'previous', 'list',
-    'toggle', 'clear',
-)
-
-
-def cmd_simple(cli, cmd):
-    cli.send('{}\n'.format(cmd))
-    return cli.recv()
-
-
-def ruok():
-    return 'what? are you kidding?'
 
 
 class Client(object):
@@ -45,28 +32,38 @@ def connect():
     client.close()
 
 
-def cmd_play(cli):
-    if len(sys.argv) != 3:
-        return ruok()
-    else:
-        cli.send('play {}\n'.format(sys.argv[2].strip()))
-        return cli.recv()
+SIMPLE_CMD_LIST = (
+    'pause', 'resume', 'stop',
+    'next', 'previous', 'list',
+    'toggle', 'clear', 'status',
+)
+
+ONE_ARGS_CMD_LIST = (
+    'remove', 'search', 'play', 'show',
+)
+
+SUPPORTED_CMD_LIST = SIMPLE_CMD_LIST + ONE_ARGS_CMD_LIST
+
+CACHE_CMD_LIST = (
+    'list', 'search',
+)
+
+INDEX_SUPPORT_CMD_LIST = (
+    'remove', 'add', 'play', 'show',
+)
+
+OUTPUT_CACHE_FILEPATH = os.path.join(
+    os.path.expanduser('~/.FeelUOwn/cache/cli.out'))
 
 
-def cmd_resume(cli):
-    if len(sys.argv) != 2:
-        return ruok()
-    else:
-        cli.send('resume\n')
-        return cli.recv()
+def ruok():
+    return '\033[0;31maha?\033[0m'
 
 
-def cmd_next(cli):
-    if len(sys.argv) != 2:
-        return ruok()
-    else:
-        cli.send('next\n')
-        return cli.recv()
+def print_error(*args, **kwargs):
+    print('\033[0;31m', end='')
+    print(*args, **kwargs)
+    print('\033[0m', end='')
 
 
 def cmd_add(cli):
@@ -84,74 +81,71 @@ def cmd_add(cli):
     return rv
 
 
-def cmd_list(cli):
-    if len(sys.argv) != 2:
-        return ruok()
-    else:
-        cli.send('list\n')
-        return cli.recv()
-
-
-def cmd_remove(cli):
-    if len(sys.argv) != 3:
-        return ruok()
-    else:
-        furi = sys.argv[2]
-        cli.send('remove {}\n'.format(furi))
-        return cli.recv()
-
-
-def cmd_status(cli):
-    if len(sys.argv) != 2:
-        return ruok()
-    else:
-        cli.send('status\n')
-        return cli.recv()
-
-
-def cmd_show(cli):
-    if len(sys.argv) != 3:
-        return ruok()
-    else:
-        identifier = sys.argv[2]
-        cli.send('show {}\n'.format(identifier))
-        return cli.recv()
-
-
-def cmd_search(cli):
-    if len(sys.argv) != 3:
-        return ruok()
-    else:
-        q = sys.argv[2]
-        cli.send('search {}\n'.format(q))
-        return cli.recv()
+def ensure_path(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 def main():
+    ensure_path(os.path.dirname(OUTPUT_CACHE_FILEPATH))
 
     args_length = len(sys.argv)
     if args_length == 1:
-        return ruok()
+        print(ruok())
+        print('Supported commands::\n')
+        for cmd in SIMPLE_CMD_LIST:
+            print('\t', cmd)
+        for cmd in ONE_ARGS_CMD_LIST:
+            print('\t', cmd, '<xxx>')
+        return
 
     cmd = sys.argv[1]
     with connect() as cli:
         cli.recv(1024)  # receive welcome message
         if cmd in SIMPLE_CMD_LIST:
-            rv = cmd_simple(cli, cmd)
-        elif cmd == 'play':
-            rv = cmd_play(cli)
-        elif cmd == 'show':
-            rv = cmd_show(cli)
+            cli.send('{}\n'.format(cmd))
+            rv = cli.recv()
         elif cmd == 'add':
             rv = cmd_add(cli)
-        elif cmd == 'list':
-            rv = cmd_list(cli)
-        elif cmd == 'status':
-            rv = cmd_status(cli)
-        elif cmd == 'remove':
-            rv = cmd_remove(cli)
-        elif cmd == 'search':
-            rv = cmd_search(cli)
+        elif cmd in ONE_ARGS_CMD_LIST:
+            try:
+                arg = sys.argv[2]
+            except IndexError:
+                print('Not enough args.')
+                return
+            if cmd in INDEX_SUPPORT_CMD_LIST:
+                try:
+                    index = int(arg)
+                except ValueError:
+                    pass
+                else:
+                    with open(OUTPUT_CACHE_FILEPATH) as f:
+                        i = 0
+                        for line in f:
+                            if i == index:
+                                arg = line
+                                break
+                            i += 1
+                        else:
+                            print_error('Invalid index.')
+                            return
+            cli.send('{} {}\n'.format(cmd, arg))
+            rv = cli.recv()
         else:
-            rv = 'Unknown Command'
-    print(rv)
+            print_error('Command not found in fuocli.')
+            return
+
+    # parse response
+    if rv.endswith('OK\n'):
+        lines = rv.split('\n')[1:-2]
+        if cmd in CACHE_CMD_LIST:
+            with open(OUTPUT_CACHE_FILEPATH, 'w') as f:
+                for index, line in enumerate(lines):
+                    print(index, line)
+                    f.write('{}\n'.format(line))
+        else:
+            print('\n'.join(lines))
+    elif rv.endswith('Oops\n'):
+        print_error('An error occured in server.')
+    else:
+        print_error('Unknown server error.')
