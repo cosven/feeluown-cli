@@ -13,8 +13,16 @@ class Client(object):
     def send(self, cmd):
         return self.sock.send(bytes(cmd, 'utf-8'))
 
-    def recv(self, num=1024*10*2):
-        return self.sock.recv(num).decode('utf-8')
+    def recv(self):
+        result = ''
+        while True:
+            string = self.sock.recv(1024 * 10).decode('utf-8')
+            result += string
+            if string.startswith('OK'):
+                break
+            if string.endswith('OK\n') or string.endswith('Oops\n'):
+                break
+        return result
 
     def close(self):
         self.sock.close()
@@ -101,7 +109,7 @@ def main():
 
     cmd = sys.argv[1]
     with connect() as cli:
-        cli.recv(1024)  # receive welcome message
+        cli.recv()  # receive welcome message
         if cmd in SIMPLE_CMD_LIST:
             cli.send('{}\n'.format(cmd))
             rv = cli.recv()
