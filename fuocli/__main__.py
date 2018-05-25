@@ -46,6 +46,10 @@ SIMPLE_CMD_LIST = (
     'toggle', 'clear', 'status',
 )
 
+CMD_ALIASES = {
+    'rm': 'remove'
+}
+
 ONE_ARGS_CMD_LIST = (
     'remove', 'search', 'play', 'show',
 )
@@ -110,6 +114,9 @@ def main():
     cmd = sys.argv[1]
     with connect() as cli:
         cli.recv()  # receive welcome message
+        if cmd in CMD_ALIASES:
+            cmd = CMD_ALIASES[cmd]
+
         if cmd in SIMPLE_CMD_LIST:
             cli.send('{}\n'.format(cmd))
             rv = cli.recv()
