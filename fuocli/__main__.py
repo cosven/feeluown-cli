@@ -155,8 +155,10 @@ def main():
         lines = rv.split('\n')[1:-2]
         if cmd in CACHE_CMD_LIST:
             with open(OUTPUT_CACHE_FILEPATH, 'w') as f:
+                padding_width = len(str(len(lines)))
+                tpl = '{:%dd} {}' % padding_width
                 for index, line in enumerate(lines):
-                    print(index, line)
+                    print(tpl.format(index, line))
                     f.write('{}\n'.format(line))
         else:
             print('\n'.join(lines))
