@@ -14,14 +14,15 @@ class Client(object):
         return self.sock.send(bytes(cmd, 'utf-8'))
 
     def recv(self):
-        result = ''
+        result = b''
         while True:
-            string = self.sock.recv(1024 * 10).decode('utf-8')
-            result += string
-            if string.startswith('OK'):
+            b = self.sock.recv(256)
+            result += b
+            if len(b) < 256:
                 break
-            if string.endswith('OK\n') or string.endswith('Oops\n'):
-                break
+        return result.decode('utf-8')
+
+
         return result
 
     def close(self):
@@ -166,3 +167,7 @@ def main():
         print_error('An error occured in server.')
     else:
         print_error('Unknown server error.')
+
+
+if __name__ == '__main__':
+    main()
