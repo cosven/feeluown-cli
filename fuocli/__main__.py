@@ -22,9 +22,6 @@ class Client(object):
                 break
         return result.decode('utf-8')
 
-
-        return result
-
     def close(self):
         self.sock.close()
 
@@ -52,7 +49,7 @@ CMD_ALIASES = {
 }
 
 ONE_ARGS_CMD_LIST = (
-    'remove', 'search', 'play', 'show',
+    'remove', 'search', 'play', 'show', 'exec',
 )
 
 SUPPORTED_CMD_LIST = SIMPLE_CMD_LIST + ONE_ARGS_CMD_LIST
@@ -94,6 +91,19 @@ def cmd_add(cli):
     return rv
 
 
+def cmd_exec(cli):
+    if len(sys.argv) not in (2, 3):
+        return ruok()
+    if len(sys.argv) == 2:
+        text = sys.stdin.read()
+    else:
+        text = sys.argv[2]
+
+    cli.send('exec <<EOF\n{}\nEOF\n\n'.format(text))
+    rv = cli.recv()
+    return rv
+
+
 def ensure_path(path):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -123,6 +133,8 @@ def main():
             rv = cli.recv()
         elif cmd == 'add':
             rv = cmd_add(cli)
+        elif cmd == 'exec':
+            rv = cmd_exec(cli)
         elif cmd in ONE_ARGS_CMD_LIST:
             try:
                 arg = sys.argv[2]
